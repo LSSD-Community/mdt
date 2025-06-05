@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Département du Shériff - Arrestations</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-6">Liste des suspects</h1>
+
+    <!-- Search filters -->
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <input id="search-suspect" type="text" placeholder="Rechercher par suspect" class="p-2 rounded border border-gray-300 w-full" />
+      <input id="search-agent" type="text" placeholder="Rechercher par agent" class="p-2 rounded border border-gray-300 w-full" />
+      <input id="search-infraction" type="text" placeholder="Rechercher par infraction" class="p-2 rounded border border-gray-300 w-full" />
+    </div>
+
+    <div id="suspect-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+  </div>
+
+  <script>
+    const API_URL = 'https://sheetdb.io/api/v1/o1tr55vq0v5qp';
+    let fullData = [];
+
+    async function fetchArrests() {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      fullData = data;
+      const grouped = groupBySuspect(data);
+      renderSuspects(grouped);
+    }
+
+    function groupBySuspect(arrests) {
+      const suspects = {};
+      arrests.forEach(entry => {
+        const key = `${entry['Nom du suspect']}|${entry['Prénom du suspect']}|${entry['Date de naissance du suspect']}`;
+        if (!suspects[key]) {
+          suspects[key] = [];
+        }
+        suspects[key].push(entry);
+      });
+      return suspects;
+    }
+
+    function renderSuspects(suspects) {
+      const container = document.getElementById('suspect-list');
+      container.innerHTML = '';
+      Object.entries(suspects).forEach(([key, records]) => {
+        const [nom, prenom, dob] = key.split('|');
+        const card = document.createElement('div');
+        card.className = 'bg-white p-4 rounded-xl shadow cursor-pointer hover:bg-gray-50';
+        card.innerHTML = `<h2 class="text-xl font-semibold">${prenom} ${nom}</h2>
+                          <p class="text-sm text-gray-600">Né(e) le : ${dob}</p>`;
+        card.onclick = () => showSuspectPage(nom, prenom, dob, records);
+        container.appendChild(card);
+      });
+    }
+
+    function showSuspectPage(nom, prenom, dob, records) {
+      document.body.innerHTML = `<div class='container mx-auto p-4'>
+        <button class='mb-4 text-blue-600 hover:underline' onclick='location.reload()'>← Retour à la liste</button>
+        <h1 class='text-3xl font-bold mb-2'>${prenom} ${nom}</h1>
+        <p class='mb-4 text-gray-600'>Date de naissance : ${dob}</p>
+
+        <h2 class='text-2xl font-semibold mt-6 mb-2'>Arrestations</h2>
+        <ul class='list-disc pl-5' id='arrest-list'></ul>
+
+        <h2 class='text-2xl font-semibold mt-6 mb-2'>Connu pour</h2>
+        <ul class='list-disc pl-5' id='motif-list'></ul>
+      </div>`;
+
+      const arrestList = document.getElementById('arrest-list');
+      const motifsSet = new Set();
+
+      records.forEach((entry, index) => {
+        const listItem = document.createElement('li');
+        listItem.className = 'cursor-pointer text-blue-600 hover:underline';
+        listItem.textContent = `${entry["Date et heure de l'arrestation"]} par ${entry["Prénom de l'agent"]} ${entry["Nom de l'agent"]} (#${entry["Numéro de badge"]})`;
+        listItem.onclick = () => showArrestDetails(entry);
+        arrestList.appendChild(listItem);
+
+        ['Motifs d\'arrestation (pleinement réalisé)', 'Motifs d\'arrestation (tentative)', 'Motifs d\'arrestation (complicité)'].forEach(field => {
+          entry[field]?.split(',').map(m => m.trim()).forEach(motif => {
+            if (motif) motifsSet.add(motif);
+          });
+        });
+      });
+
+      const motifList = document.getElementById('motif-list');
+      motifsSet.forEach(motif => {
+        const li = document.createElement('li');
+        li.textContent = motif;
+        motifList.appendChild(li);
+      });
+    }
+
+    function showArrestDetails(entry) {
+      document.body.innerHTML = `<div class='container mx-auto p-4'>
+        <button class='mb-4 text-blue-600 hover:underline' onclick='location.reload()'>← Retour à la liste</button>
+        <h1 class='text-3xl font-bold mb-2'>Détails de l'arrestation</h1>
+        <p class='text-gray-700 mb-2'>Date : ${entry["Date et heure de l'arrestation"]}</p>
+        <p class='text-gray-700 mb-2'>Agent : ${entry["Prénom de l'agent"]} ${entry["Nom de l'agent"]} (#${entry["Numéro de badge"]})</p>
+        <p class='text-gray-700 mb-2'>Lieu : ${entry["Lieu de l'arrestation"]}</p>
+
+        <h2 class='text-2xl font-semibold mt-6 mb-2'>Motifs</h2>
+        <ul class='list-disc pl-5'>
+          ${['Motifs d\'arrestation (pleinement réalisé)', 'Motifs d\'arrestation (tentative)', 'Motifs d\'arrestation (complicité)'].map(field => {
+            return entry[field] ? `<li><strong>${field.split('(')[1].replace(')', '')}:</strong> ${entry[field]}</li>` : '';
+          }).join('')}
+        </ul>
+      </div>`;
+    }
+
+    function applyFilters() {
+      const suspectQuery = document.getElementById('search-suspect').value.toLowerCase();
+      const agentQuery = document.getElementById('search-agent').value.toLowerCase();
+      const infractionQuery = document.getElementById('search-infraction').value.toLowerCase();
+
+      const filtered = fullData.filter(entry => {
+        const suspectMatch = `${entry["Nom du suspect"]} ${entry["Prénom du suspect"]}`.toLowerCase().includes(suspectQuery);
+        const agentMatch = `${entry["Nom de l'agent"]} ${entry["Prénom de l'agent"]}`.toLowerCase().includes(agentQuery);
+        const infractionMatch = (
+          (entry["Motifs d'arrestation (pleinement réalisé)"] || '') +
+          (entry["Motifs d'arrestation (tentative)"] || '') +
+          (entry["Motifs d'arrestation (complicité)"] || '')
+        ).toLowerCase().includes(infractionQuery);
+
+        return suspectMatch && agentMatch && infractionMatch;
+      });
+
+      const grouped = groupBySuspect(filtered);
+      renderSuspects(grouped);
+    }
+
+    document.addEventListener('input', (e) => {
+      if (["search-suspect", "search-agent", "search-infraction"].includes(e.target.id)) {
+        applyFilters();
+      }
+    });
+
+    fetchArrests();
+  </script>
+</body>
+</html>
