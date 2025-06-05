@@ -11,10 +11,13 @@
     <h1 class="text-3xl font-bold mb-6">Liste des suspects</h1>
 
     <!-- Search filters -->
-    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
       <input id="search-suspect" type="text" placeholder="Rechercher par suspect" class="p-2 rounded border border-gray-300 w-full" />
       <input id="search-agent" type="text" placeholder="Rechercher par agent" class="p-2 rounded border border-gray-300 w-full" />
       <input id="search-infraction" type="text" placeholder="Rechercher par infraction" class="p-2 rounded border border-gray-300 w-full" />
+      <select id="search-affiliation" class="p-2 rounded border border-gray-300 w-full">
+        <option value="">Toutes les affiliations</option>
+      </select>
     </div>
 
     <div id="suspect-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
@@ -28,8 +31,29 @@
       const res = await fetch(API_URL);
       const data = await res.json();
       fullData = data;
+      populateAffiliationFilter(data);
       const grouped = groupBySuspect(data);
       renderSuspects(grouped);
+    }
+
+    function populateAffiliationFilter(data) {
+      const select = document.getElementById('search-affiliation');
+      const affiliationsSet = new Set();
+      data.forEach(entry => {
+        if (entry["Affiliation"]) {
+          entry["Affiliation"].split(',').map(a => a.trim()).forEach(aff => {
+            if (aff) affiliationsSet.add(aff);
+          });
+        }
+      });
+      // Remove all except first option
+      select.innerHTML = '<option value="">Toutes les affiliations</option>';
+      Array.from(affiliationsSet).sort().forEach(aff => {
+        const option = document.createElement('option');
+        option.value = aff;
+        option.textContent = aff;
+        select.appendChild(option);
+      });
     }
 
     function groupBySuspect(arrests) {
@@ -63,6 +87,7 @@
         <button class='mb-4 text-blue-600 hover:underline' onclick='location.reload()'>← Retour à la liste</button>
         <h1 class='text-3xl font-bold mb-2'>${prenom} ${nom}</h1>
         <p class='mb-4 text-gray-600'>Date de naissance : ${dob}</p>
+        <div id="affiliations" class="mb-4 flex flex-wrap gap-2"></div>
 
         <h2 class='text-2xl font-semibold mt-6 mb-2'>Arrestations</h2>
         <ul class='list-disc pl-5' id='arrest-list'></ul>
@@ -70,6 +95,23 @@
         <h2 class='text-2xl font-semibold mt-6 mb-2'>Connu pour</h2>
         <ul class='list-disc pl-5' id='motif-list'></ul>
       </div>`;
+
+      // Affiliation badges
+      const affiliationsSet = new Set();
+      records.forEach(entry => {
+        if (entry["Affiliation"]) {
+          entry["Affiliation"].split(',').map(a => a.trim()).forEach(aff => {
+            if (aff) affiliationsSet.add(aff);
+          });
+        }
+      });
+      const affiliationsDiv = document.getElementById('affiliations');
+      affiliationsSet.forEach(aff => {
+        const badge = document.createElement('span');
+        badge.className = 'inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold';
+        badge.textContent = aff;
+        affiliationsDiv.appendChild(badge);
+      });
 
       const arrestList = document.getElementById('arrest-list');
       const motifsSet = new Set();
@@ -117,6 +159,7 @@
       const suspectQuery = document.getElementById('search-suspect').value.toLowerCase();
       const agentQuery = document.getElementById('search-agent').value.toLowerCase();
       const infractionQuery = document.getElementById('search-infraction').value.toLowerCase();
+      const affiliationValue = document.getElementById('search-affiliation').value;
 
       const filtered = fullData.filter(entry => {
         const suspectMatch = `${entry["Nom du suspect"]} ${entry["Prénom du suspect"]}`.toLowerCase().includes(suspectQuery);
@@ -127,7 +170,12 @@
           (entry["Motifs d'arrestation (complicité)"] || '')
         ).toLowerCase().includes(infractionQuery);
 
-        return suspectMatch && agentMatch && infractionMatch;
+        let affiliationMatch = true;
+        if (affiliationValue) {
+          affiliationMatch = (entry["Affiliation"] || '').split(',').map(a => a.trim()).includes(affiliationValue);
+        }
+
+        return suspectMatch && agentMatch && infractionMatch && affiliationMatch;
       });
 
       const grouped = groupBySuspect(filtered);
@@ -139,6 +187,8 @@
         applyFilters();
       }
     });
+
+    document.getElementById('search-affiliation').addEventListener('change', applyFilters);
 
     fetchArrests();
   </script>
