@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Hiérarchie LSSD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-10">
+    <div class="max-w-6xl mx-auto space-y-6" id="hierarchy"></div>
+
+    <script>
+        // Données
+        const personnel = [
+            { "firstname": "Michael", "lastname": "Williams", "units": ["Station 28 — Davis"] },
+            { "firstname": "Travis", "lastname": "Roberts", "units": ["Station 28 — Davis"] },
+            { "firstname": "Juan", "lastname": "Mora", "units": ["Unité n°1"] },
+            { "firstname": "Alec", "lastname": "Duncan", "units": ["Unité n°1", "Traffic Detail"] },
+            { "firstname": "Miles", "lastname": "Autaqué", "units": ["Unité n°1", "Special Enforcement Detail", "Air Support Team"] },
+            { "firstname": "Robert", "lastname": "Sullivan", "units": ["Unité n°1"] },
+            { "firstname": "Frank", "lastname": "Cassel", "units": ["Unité n°1"] },
+            { "firstname": "Raphael", "lastname": "Keith", "units": ["Unité n°1"] },
+            { "firstname": "Colin", "lastname": "Water", "units": ["Unité n°1"] },
+            { "firstname": "John", "lastname": "Walker", "units": ["Unité n°1"] },
+            { "firstname": "Peyton", "lastname": "Hampton", "units": ["Unité n°2", "Air Support Team", "Internal Affairs Bureau"] },
+            { "firstname": "Welson", "lastname": "Gale", "units": ["Unité n°2"] },
+            { "firstname": "Tom", "lastname": "Hazard", "units": ["Unité n°2"] },
+            { "firstname": "Clara", "lastname": "Alcaraz", "units": ["Unité n°2"] },
+            { "firstname": "Jason", "lastname": "Miller", "units": ["Unité n°2", "Air Support Team", "Special Enforcement Detail"] },
+            { "firstname": "Jean-Pierre", "lastname": "Delacroix", "units": ["Unité n°2"] },
+            { "firstname": "Nolan", "lastname": "Jung-Yin", "units": ["Unité n°2"] },
+            { "firstname": "Preston", "lastname": "Marlowe", "units": ["Unité n°2"] },
+            { "firstname": "James", "lastname": "Baker", "units": ["Unité n°2"] },
+            { "firstname": "Williams", "lastname": "Mc Douglas", "units": ["Unité n°2"] },
+            { "firstname": "Bobby", "lastname": "Johnson", "units": ["Special Enforcement Detail"] },
+            { "firstname": "Mike", "lastname": "Wish", "units": "Internal Affairs Bureau" }
+        ];
+
+        const grades = [
+            { "firstname": "Michael", "lastname": "Williams", "job_grade": "8", "badge_number": "6129" },
+            { "firstname": "Travis", "lastname": "Roberts", "job_grade": "7", "badge_number": "9993" },
+            { "firstname": "Juan", "lastname": "Mora", "job_grade": "6", "badge_number": "3578" },
+            { "firstname": "Alec", "lastname": "Duncan", "job_grade": "2", "badge_number": "6804" },
+            { "firstname": "Miles", "lastname": "Autaqué", "job_grade": "3", "badge_number": "8400" },
+            { "firstname": "Robert", "lastname": "Sullivan", "job_grade": "3", "badge_number": "5259" },
+            { "firstname": "Frank", "lastname": "Cassel", "job_grade": "1", "badge_number": "0807" },
+            { "firstname": "Raphael", "lastname": "Keith", "job_grade": "1", "badge_number": "8173" },
+            { "firstname": "Colin", "lastname": "Water", "job_grade": "1", "badge_number": "7288" },
+            { "firstname": "John", "lastname": "Walker", "job_grade": "1", "badge_number": "0664" },
+            { "firstname": "Peyton", "lastname": "Hampton", "job_grade": "6", "badge_number": "8925" },
+            { "firstname": "Welson", "lastname": "Gale", "job_grade": "5", "badge_number": "8219" },
+            { "firstname": "Tom", "lastname": "Hazard", "job_grade": "3", "badge_number": "2392" },
+            { "firstname": "Clara", "lastname": "Alcaraz", "job_grade": "3", "badge_number": "1899" },
+            { "firstname": "Jason", "lastname": "Miller", "job_grade": "3", "badge_number": "2156" },
+            { "firstname": "Jean-Pierre", "lastname": "Delacroix", "job_grade": "3", "badge_number": "3731" },
+            { "firstname": "Nolan", "lastname": "Jung-Yin", "job_grade": "2", "badge_number": "8281" },
+            { "firstname": "Preston", "lastname": "Marlowe", "job_grade": "2", "badge_number": "1310" },
+            { "firstname": "James", "lastname": "Baker", "job_grade": "1", "badge_number": "2410" },
+            { "firstname": "Williams", "lastname": "Mc Douglas", "job_grade": "1", "badge_number": "8258" },
+            { "firstname": "Bobby", "lastname": "Johnson", "job_grade": "6", "badge_number": "3795" },
+            { "firstname": "Mike", "lastname": "Wish", "job_grade": "7", "badge_number": "0000" }
+        ];
+
+        const structure = [
+            {
+                "name": "Station 28 — Davis",
+                "responsible": { "firstname": "Michael", "lastname": "Williams" },
+                "units": [
+                    { "name": "Unité n°1", "responsible": { "firstname": "Juan", "lastname": "Mora" } },
+                    { "name": "Unité n°2", "responsible": { "firstname": "Peyton", "lastname": "Hampton" } },
+                    { "name": "Traffic Detail", "responsible": { "firstname": "Mike", "lastname": "Wish" } }
+                ]
+            },
+            {
+                "name": "Special Enforcement Bureau",
+                "responsible": { "firstname": "Michael", "lastname": "Williams" },
+                "units": [
+                    { "name": "Special Enforcement Detail", "responsible": { "firstname": "Bobby", "lastname": "Johnson" } },
+                    { "name": "Canine Services Detail", "responsible": { "firstname": "Mike", "lastname": "Wish" } },
+                    { "name": "Emergency Services Detail", "responsible": { "firstname": "Mike", "lastname": "Wish" } }
+                ]
+            },
+            {
+                "name": "Aero Bureau",
+                "responsible": { "firstname": "Michael", "lastname": "Williams" },
+                "units": [
+                    { "name": "Air Support Team", "responsible": { "firstname": "Mike", "lastname": "Wish" } }
+                ]
+            },
+            {
+                "name": "Internal Affairs Bureau",
+                "responsible": { "firstname": "Michael", "lastname": "Williams" }
+            }
+        ];
+
+        // Fonctions d'affichage
+        function getBadge(person) {
+            const badge = grades.find(p => p.firstname === person.firstname && p.lastname === person.lastname);
+            return badge ? `— Badge n°${badge.badge_number}` : '';
+        }
+
+        function getGrade(person) {
+            const grade = grades.find(p => p.firstname === person.firstname && p.lastname === person.lastname);
+            if (!grade) return '';
+            switch (parseInt(grade.job_grade)) {
+                case 8: return 'Capitaine';
+                case 7: return 'Lieutenant';
+                case 6: return 'Sergent';
+                case 5: return 'Adjoint (MFTO)';
+                case 4: return 'Adjoint (bonus II)';
+                case 3: return 'Adjoint (bonus I)';
+                case 2: return 'Adjoint';
+                case 1: return 'Adjoint stagiaire';
+                default: return 'Bénévole';
+            }
+        }
+
+        function createMemberLine(person) {
+            return `<li class="ml-4">${getGrade(person)} ${person.firstname} ${person.lastname} ${getBadge(person)}</li>`;
+        }
+
+        function createHierarchy() {
+            let content = '';
+
+            structure.forEach(station => {
+                content += `<div class="bg-white p-6 rounded-2xl shadow">
+                                <h1 class="text-2xl font-bold mb-4">${station.name}</h1>`;
+
+                // Chef de la station
+                content += `<h2 class="text-xl font-semibold mb-2">${getGrade(station.responsible)} ${station.responsible.firstname} ${station.responsible.lastname} ${getBadge(station.responsible)}</h2>`;
+
+                // Subordonnés directs
+                const stationMembers = personnel.filter(p => p.units.includes(station.name) && !(p.firstname === station.responsible.firstname && p.lastname === station.responsible.lastname));
+                stationMembers.sort((a, b) => {
+                    const gradeA = parseInt(grades.find(p => p.firstname === a.firstname && p.lastname === a.lastname)?.job_grade || 0);
+                    const gradeB = parseInt(grades.find(p => p.firstname === b.firstname && p.lastname === b.lastname)?.job_grade || 0);
+                    return gradeB - gradeA;
+                });
+                stationMembers.forEach(member => {
+                    content += createMemberLine(member);
+                });
+
+                // Unités
+                if (station.units) {
+                    station.units.forEach(unit => {
+                        content += `<h3 class="text-lg font-medium mt-4">${getGrade(unit.responsible)} ${unit.responsible.firstname} ${unit.responsible.lastname} ${getBadge(unit.responsible)} — ${unit.name}</h3>`;
+                        const unitMembers = personnel.filter(p => p.units.includes(unit.name) && !(p.firstname === unit.responsible.firstname && p.lastname === unit.responsible.lastname));
+                        unitMembers.sort((a, b) => {
+                            const gradeA = parseInt(grades.find(p => p.firstname === a.firstname && p.lastname === a.lastname)?.job_grade || 0);
+                            const gradeB = parseInt(grades.find(p => p.firstname === b.firstname && p.lastname === b.lastname)?.job_grade || 0);
+                            return gradeB - gradeA;
+                        });
+                        content += '<ul>';
+                        unitMembers.forEach(member => {
+                            content += createMemberLine(member);
+                        });
+                        content += '</ul>';
+                    });
+                }
+
+                content += '</div>';
+            });
+
+            document.getElementById('hierarchy').innerHTML = content;
+        }
+
+        createHierarchy();
+    </script>
+</body>
+</html>
