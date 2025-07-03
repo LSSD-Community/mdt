@@ -9,7 +9,7 @@
     <div class="max-w-6xl mx-auto space-y-6" id="hierarchy"></div>
 
     <script>
-        async function fetch(url) {
+        async function customFetch(url) {
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
@@ -24,15 +24,15 @@
         }
 
         async function fetchPersonnel() {
-            return await fetch("https://api.mdt.lssd-community.cozedev.com/hierarchy/members");
+            return await customFetch("https://api.mdt.lssd-community.cozedev.com/hierarchy/members");
         }
 
         async function fetchGrades() {
-            return await fetch("https://api.mdt.lssd-community.cozedev.com/hierarchy/grades");
+            return await customFetch("https://api.mdt.lssd-community.cozedev.com/hierarchy/grades");
         }
 
         async function fetchStructure() {
-            return await fetch("https://api.mdt.lssd-community.cozedev.com/hierarchy/structure");
+            return await customFetch("https://api.mdt.lssd-community.cozedev.com/hierarchy/structure");
         }
 
         async function fetchAllData() {
