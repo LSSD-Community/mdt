@@ -125,10 +125,8 @@
 
         fetchAllData().then(data => {
             if (data) {
-                const personnel = data[0];
-                const grades = data[1];
-                const structure = data[2];
-                rendererData(data[0], data[1], data[2]);
+                const { personnelData, gradesData, structureData } = data;
+                rendererData(personnelData, gradesData, structureData);
             }
         });
     </script>
