@@ -1,6 +1,36 @@
-import Link from "next/link";
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { isAuthenticated, login } from '@/lib/auth';
 
 export default function Home() {
+  const [pseudo, setPseudo] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  if (isAuthenticated()) {
+    window.location.href = '/dashboard';
+    return null;
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      await login(pseudo, password);
+      window.location.href = '/dashboard';
+      // alert('Connexion réussie !');
+    } catch (err) {
+      setError((err as Error).message || 'Erreur inconnue');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="h-full bg-white">
       <main>
@@ -17,7 +47,7 @@ export default function Home() {
           </div>
 
           <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-            <form action="#" method="POST" className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="pseudo" className="block text-sm/6 font-medium text-gray-900">
                   Pseudonyme
@@ -28,7 +58,9 @@ export default function Home() {
                     name="pseudo"
                     type="text"
                     required
-                    autoComplete="current-pseudo"
+                    autoComplete="username"
+                    value={pseudo}
+                    onChange={e => setPseudo(e.target.value)}
                     className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                   />
                 </div>
@@ -52,17 +84,22 @@ export default function Home() {
                     type="password"
                     required
                     autoComplete="current-password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
                     className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                   />
                 </div>
               </div>
 
+              {error && <p className="text-red-600 text-sm">{error}</p>}
+
               <div>
                 <button
                   type="submit"
-                  className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  disabled={loading}
+                  className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
                 >
-                  Se connecter
+                  {loading ? 'Connexion...' : 'Se connecter'}
                 </button>
               </div>
             </form>

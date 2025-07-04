@@ -1,11 +1,48 @@
 'use client';
 
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { Bars3Icon, XMarkIcon, UserIcon, DocumentPlusIcon, ArrowRightOnRectangleIcon, BookOpenIcon, BuildingLibraryIcon } from '@heroicons/react/24/outline';
+import { Hierarchy } from '@/components/dashboard/hierarchy';
+import { fetchUserData, isAuthenticated, logout } from '@/lib/auth';
+import { fetchAllCharacters, getCharactersForSpecificUser, getGradeName } from '@/lib/characters';
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('Profil');
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [allCharacters, setAllCharacters] = useState<any[]>([]);
+
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      window.location.href = '/';
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      fetchUserData().then((user) => {
+        console.log('Fetched user data:', user);
+        setCurrentUser(user);
+        getCharactersForSpecificUser(user)
+          .then((characters) => {
+            console.log('Fetched characters:', characters);
+            setAllCharacters(characters);
+          });
+      }).catch((error) => {
+        console.error('Error fetching user data:', error);
+        window.location.href = '/';
+      });
+    }
+  }, []);
+  
+  if (!isAuthenticated()) {
+    return null;
+  }
+  if (!currentUser) return null;
+
+  console.log('Current user data:', currentUser);
 
   const sections = [
     { name: 'Profil', icon: UserIcon },
@@ -55,8 +92,36 @@ const Dashboard = () => {
         <div className="flex-1 p-6">
           {activeSection === 'Profil' && (
             <div>
-              <h1 className="text-2xl font-bold mb-4 text-gray-900">Profil</h1>
-              <p className='text-gray-600'>Bienvenue sur votre profil. Voici vos informations personnelles.</p>
+              <h1 className="text-2xl font-bold mb-4 text-gray-900">{currentUser?.username}</h1>
+              <p className='text-gray-600'>Bienvenue sur votre profil. Voici vos informations personnages.</p>
+
+              { allCharacters.length > 0 ? (
+                <div className='flex items-center space-x-4 mt-6'>
+                  {allCharacters.map((character) => (
+                    <div className="max-w-sm rounded-lg bg-white overflow-hidden shadow-lg mt-6">
+                      <div className="px-6 py-4">
+                        <div className="font-bold text-xl text-gray-800">{character.firstname} {character.lastname}</div>
+                      </div>
+                      <div className="px-6 pt-4 pb-2">
+                        <span className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">{getGradeName(character.grade_id)}</span>
+                        <span className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">Unité inconnue</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (<></>)}  
+
+              <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+                <button
+                  className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+                  onClick={() => {
+                    logout();
+                    window.location.href = '/';
+                  }}
+                >
+                  Se déconnecter
+                </button>
+              </div>
             </div>
           )}
 
@@ -82,10 +147,7 @@ const Dashboard = () => {
           )}
 
           {activeSection === 'Hiérarchie' && (
-            <div>
-              <h1 className="text-2xl font-bold mb-4 text-gray-900">Hiérarchie</h1>
-              <p className='text-gray-600'>Consultez la structure hiérarchique de l'organisation.</p>
-            </div>
+            <Hierarchy />
           )}
         </div>
       </div>

@@ -1,7 +1,16 @@
+'use client';
+
 import SexSelection from "@/components/forms/sex-selection";
+import { isAuthenticated } from "@/lib/auth";
 import Link from "next/link";
 
-export default function Home() {
+export default function CreateAccount() {
+
+  if (isAuthenticated()) {
+    window.location.href = '/dashboard';
+    return null;
+  }
+
   return (
     <div className="h-full bg-white">
       <main>
